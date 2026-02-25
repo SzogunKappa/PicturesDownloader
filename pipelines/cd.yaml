@@ -1,105 +1,183 @@
-trigger:
-- master
-
-pr:
-- none
-
-variables:
-  azureServiceConnection: AzureServiceConnection
-  buildConfiguration: Release
+trigger: - master 
+ 
+pr: - none 
+ 
+variables: 
+  terraformWorkingDir: terraform 
+  azureServiceConnection: AzureServiceConnection 
+  terraformVersion: 1.6.6 
+  buildConfiguration: Release 
   apiAppName: lab11api74115
   downloaderAppName: lab11downloader74115
-stages:
-- stage: BuildApi
-  displayName: API - Build & Deploy
-  jobs:
-  - job: BuildApi
-    pool:
-      vmImage: windows-latest
-    steps:
-    - checkout: self
+ 
+stages: - stage: TerraformPlan 
+  displayName: Terraform Plan 
+  jobs: 
+  - job: Plan 
+    pool: 
+      vmImage: windows-latest 
+    steps: 
+    - checkout: self 
+ 
+    - task: TerraformInstaller@1 
+      inputs: 
+        terraformVersion: $(terraformVersion) 
+ 
+    - task: TerraformTaskV4@4 
+      inputs: 
+        provider: azurerm 
+        command: init 
+        workingDirectory: $(terraformWorkingDir) 
+        backendServiceArm: $(azureServiceConnection) 
+        backendAzureRmResourceGroupName: LabCommon 
+        backendAzureRmStorageAccountName: common74115
+        backendAzureRmContainerName: terraform 
+        backendAzureRmKey: lab11.tfstate 
+ 
+    - task: TerraformTaskV4@4 
+      inputs: 
+        provider: azurerm 
+        command: plan 
+        workingDirectory: $(terraformWorkingDir) 
+        environmentServiceNameAzureRM: $(azureServiceConnection)
+- stage: ManualApproval 
+  displayName: Manual validation 
+  dependsOn: TerraformPlan 
+  jobs: 
+  - job: WaitForApproval 
+    pool: server 
+    steps: 
+    - task: ManualValidation@0 
+      inputs: 
+        instructions: | 
+          Review terraform plan. 
+          Approve to apply infrastructure changes. 
+        onTimeout: reject 
+        timeoutInMinutes: 1440 
+ - stage: TerraformApply 
+  displayName: Terraform Apply 
+  dependsOn: ManualApproval 
+  jobs: 
+  - job: Apply 
+    pool: 
+      vmImage: ubuntu-latest 
+    steps: 
+    - checkout: self 
+ 
+    - task: TerraformInstaller@1 
+      inputs: 
+        terraformVersion: $(terraformVersion) 
+ 
+    - task: TerraformTaskV4@4 
+      inputs: 
+        provider: azurerm 
+        command: init 
+        workingDirectory: $(terraformWorkingDir) 
+        environmentServiceNameAzureRM: $(azureServiceConnection) 
+        backendServiceArm: $(azureServiceConnection) 
+        backendAzureRmResourceGroupName: LabCommon 
+        backendAzureRmStorageAccountName: common74115
+        backendAzureRmContainerName: terraform 
+        backendAzureRmKey: lab11.tfstate 
+ 
+    - task: TerraformTaskV4@4 
+      inputs: 
+        provider: azurerm 
+        command: apply 
+        workingDirectory: $(terraformWorkingDir) 
+        environmentServiceNameAzureRM: $(azureServiceConnection) 
+        commandOptions: -auto-approve 
 
-    - task: UseDotNet@2
-      inputs:
-        version: '8.0.x'
+ - stage: BuildApi 
+  displayName: API - Build & Deploy 
+  dependsOn: TerraformApply 
+  jobs: 
+  - job: BuildApi 
+    pool: 
+      vmImage: windows-latest 
+    steps: 
+    - checkout: self 
+ 
+    - task: UseDotNet@2 
+      inputs: 
+        version: '8.0.x' 
+ 
+    - task: DotNetCoreCLI@2 
+      displayName: Publish API 
+      inputs: 
+        command: publish 
+        publishWebProjects: false 
+        projects: code/Api/Api.csproj 
+        arguments: >- 
+          -c $(buildConfiguration) 
+          -o $(Pipeline.Workspace)/api 
+      
+    - publish: $(Pipeline.Workspace)/api 
+      artifact: artifact-api 
+ - stage: DeployApi 
+  displayName: Deploy API Function 
+  dependsOn: BuildApi 
+  jobs: 
+  - job: DeployApi 
+    pool: 
+      vmImage: windows-latest 
+    steps: 
+      - task: DownloadPipelineArtifact@2 
+        displayName: Download api artifact 
+        inputs: 
+          buildType: current 
+          artifact: artifact-api 
+          path: $(Pipeline.Workspace)/api 
+      - task: AzureFunctionApp@2 
+        inputs: 
+          AzureSubscription: $(azureServiceConnection) 
+          appType: functionApp 
+          appName: $(apiAppName) 
+          package: $(Pipeline.Workspace)/api/**/*.zip
 
-    - task: DotNetCoreCLI@2
-      displayName: Publish API
-      inputs:
-        command: publish
-        publishWebProjects: false
-        projects: code/Api/Api.csproj
-        arguments: >-
-          -c $(buildConfiguration)
-          -o $(Pipeline.Workspace)/api
-
-    - publish: $(Pipeline.Workspace)/api
-      artifact: artifact-api
-
-- stage: DeployApi
-  displayName: Deploy API Function
-  dependsOn: BuildApi
-  jobs:
-  - job: DeployApi
-    pool:
-      vmImage: windows-latest
-    steps:
-    - task: DownloadPipelineArtifact@2
-      displayName: Download api artifact
-      inputs:
-        buildType: current
-        artifact: artifact-api
-        path: $(Pipeline.Workspace)/api
-    - task: AzureFunctionApp@2
-      inputs:
-        AzureSubscription: $(azureServiceConnection)
-        appType: functionApp
-        appName: $(apiAppName)
-        package: $(Pipeline.Workspace)/api/**/*.zip
-
-- stage: BuildDownloader
-  displayName: Downloader - Build & Deploy
-  dependsOn: TerraformApply
-  jobs:
-  - job: BuildDownloader
-    pool:
-      vmImage: windows-latest
-    steps:
-    - checkout: self
-
-    - task: UseDotNet@2
-      inputs:
-        version: '8.0.x'
-
-    - task: DotNetCoreCLI@2
-      displayName: Publish Downloader
-      inputs:
-        command: publish
-        publishWebProjects: false
-        projects: code/Downloader/Downloader.csproj
-        arguments: >-
-          -c $(buildConfiguration)
-          -o $(Pipeline.Workspace)/downloader
-    
-    - publish: $(Pipeline.Workspace)/downloader
-      artifact: artifact-downloader
-- stage: DeployDownloader
-  displayName: Deploy Downloader Function
-  dependsOn: BuildDownloader
-  jobs:
-  - job: DeployDownloader
-    pool:
-      vmImage: windows-latest
-    steps:
-      - task: DownloadPipelineArtifact@2
-        displayName: Download downloader artifact
-        inputs:
-          buildType: current
-          artifact: artifact-downloader
-          path: $(Pipeline.Workspace)/downloader
-      - task: AzureFunctionApp@2
-        inputs:
-          AzureSubscription: $(azureServiceConnection)
-          appType: functionApp
-          appName: $(downloaderAppName)
+- stage: BuildDownloader 
+  displayName: Downloader - Build & Deploy 
+  dependsOn: TerraformApply 
+  jobs: 
+  - job: BuildDownloader 
+    pool: 
+      vmImage: windows-latest 
+    steps: 
+    - checkout: self 
+ 
+    - task: UseDotNet@2 
+      inputs: 
+        version: '8.0.x' 
+ 
+    - task: DotNetCoreCLI@2 
+      displayName: Publish Downloader 
+      inputs: 
+        command: publish 
+        publishWebProjects: false 
+        projects: code/Downloader/Downloader.csproj 
+        arguments: >- 
+          -c $(buildConfiguration) 
+          -o $(Pipeline.Workspace)/downloader 
+      
+    - publish: $(Pipeline.Workspace)/downloader 
+      artifact: artifact-downloader 
+ - stage: DeployDownloader 
+  displayName: Deploy Downloader Function 
+  dependsOn: BuildDownloader 
+  jobs: 
+  - job: DeployDownloader 
+    pool: 
+      vmImage: windows-latest 
+    steps: 
+      - task: DownloadPipelineArtifact@2 
+        displayName: Download downloader artifact 
+        inputs: 
+          buildType: current 
+          artifact: artifact-downloader 
+          path: $(Pipeline.Workspace)/downloader 
+      - task: AzureFunctionApp@2 
+        inputs: 
+          AzureSubscription: $(azureServiceConnection) 
+          appType: functionApp 
+          appName: $(downloaderAppName) 
           package: $(Pipeline.Workspace)/downloader/**/*.zip
