@@ -58,9 +58,9 @@ stages:
         onTimeout: reject 
         timeoutInMinutes: 1440 
  - stage: TerraformApply 
-  displayName: Terraform Apply 
-  dependsOn: ManualApproval 
-  jobs: 
+   displayName: Terraform Apply 
+   dependsOn: ManualApproval 
+   jobs: 
   - job: Apply 
     pool: 
       vmImage: ubuntu-latest 
