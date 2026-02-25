@@ -43,15 +43,15 @@ stages:
     pool:
       vmImage: windows-latest
     steps:
-      - task: DownloadPipelineArtifact@2
-        displayName: Download api artifact
-        inputs:
-          buildType: current
-          artifact: artifact-api
-          path: $(Pipeline.Workspace)/api
-      - task: AzureFunctionApp@2
-        inputs:
-          AzureSubscription: $(azureServiceConnection)
-          appType: functionApp
-          appName: $(apiAppName)
-          package: $(Pipeline.Workspace)/api/**/*.zip
+    - task: DownloadPipelineArtifact@2
+      displayName: Download api artifact
+      inputs:
+        buildType: current
+        artifact: artifact-api
+        path: $(Pipeline.Workspace)/api
+    - task: AzureFunctionApp@2
+      inputs:
+        AzureSubscription: $(azureServiceConnection)
+        appType: functionApp
+        appName: $(apiAppName)
+        package: $(Pipeline.Workspace)/api/**/*.zip
