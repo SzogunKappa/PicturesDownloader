@@ -38,7 +38,8 @@ stages:
 - stage: TerraformValidate
   displayName: Terraform validation
   dependsOn: VerifyCode
-jobs:
+  jobs:
+  
   - job: Terraform
     displayName: Terraform validate
     pool:
