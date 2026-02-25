@@ -74,12 +74,12 @@ stages:
     - task: DotNetCoreCLI@2
       displayName: Publish Downloader
       inputs:
-      command: publish
-      publishWebProjects: false
-      projects: code/Downloader/Downloader.csproj
-      arguments: >-
-        -c $(buildConfiguration)
-        -o $(Pipeline.Workspace)/downloader
+        command: publish
+        publishWebProjects: false
+        projects: code/Downloader/Downloader.csproj
+        arguments: >-
+          -c $(buildConfiguration)
+          -o $(Pipeline.Workspace)/downloader
     
     - publish: $(Pipeline.Workspace)/downloader
       artifact: artifact-downloader
