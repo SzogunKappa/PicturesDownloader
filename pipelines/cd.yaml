@@ -12,7 +12,8 @@ variables:
   apiAppName: lab11api74115
   downloaderAppName: lab11downloader74115
  
-stages: - stage: TerraformPlan 
+stages: 
+- stage: TerraformPlan 
   displayName: Terraform Plan 
   jobs: 
   - job: Plan 
