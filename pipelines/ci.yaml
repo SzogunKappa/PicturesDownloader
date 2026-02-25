@@ -34,7 +34,7 @@ stages:
 - stage: Stage2
   displayName: Second stage
   jobs:
-  
+
   - job: ManualApproval
     displayName: Manual validation before Stage2
     pool: server
@@ -48,6 +48,7 @@ stages:
         timeoutInMinutes: 60
 
   - job: Job1
+    dependsOn: ManualApproval
     displayName: First job in second stage
     pool:
      vmImage: windows-latest
@@ -59,6 +60,7 @@ stages:
         echo See https://aka.ms/yaml
       displayName: 'Second step: Run a multi-line script'
   - job: Job2
+    dependsOn: Job1
     displayName: Second job in second stage
     pool:
       vmImage: windows-latest
