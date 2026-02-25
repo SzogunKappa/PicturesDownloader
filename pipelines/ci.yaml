@@ -31,20 +31,20 @@ stages:
         echo See https://aka.ms/yaml
       displayName: 'Second step: Run a multi-line script'
 
-  - stage: Stage2
-    displayName: Second stage
-    jobs:
-    - job: Job1
-      displayName: First job in second stage
-      pool:
-        vmImage: windows-latest
-      steps:
-      - script: echo Hello, world!
-        displayName: 'First step: Run a one-line script'
-      - script: |
-          echo Add other tasks to build, test, and deploy your project.
-          echo See https://aka.ms/yaml
-        displayName: 'Second step: Run a multi-line script'
+- stage: Stage2
+  displayName: Second stage
+  jobs:
+  - job: Job1
+    displayName: First job in second stage
+    pool:
+     vmImage: windows-latest
+    steps:
+    - script: echo Hello, world!
+      displayName: 'First step: Run a one-line script'
+    - script: |
+        echo Add other tasks to build, test, and deploy your project.
+        echo See https://aka.ms/yaml
+      displayName: 'Second step: Run a multi-line script'
   - job: Job2
     displayName: Second job in second stage
     pool:
