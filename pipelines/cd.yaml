@@ -57,10 +57,10 @@ stages:
           Approve to apply infrastructure changes. 
         onTimeout: reject 
         timeoutInMinutes: 1440 
- - stage: TerraformApply 
-   displayName: Terraform Apply 
-   dependsOn: ManualApproval 
-   jobs: 
+- stage: TerraformApply 
+  displayName: Terraform Apply 
+  dependsOn: ManualApproval 
+  jobs: 
   - job: Apply 
     pool: 
       vmImage: ubuntu-latest 
