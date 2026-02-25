@@ -55,3 +55,4 @@ stages:
         appType: functionApp
         appName: $(apiAppName)
         package: $(Pipeline.Workspace)/api/**/*.zip
+        
