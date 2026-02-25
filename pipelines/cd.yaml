@@ -1,6 +1,8 @@
-trigger: - master 
+trigger: 
+- master 
  
-pr: - none 
+pr: 
+- none 
  
 variables: 
   terraformWorkingDir: terraform 
