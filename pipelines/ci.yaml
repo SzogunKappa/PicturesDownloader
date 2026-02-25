@@ -50,4 +50,4 @@ jobs:
         cd terraform
         terraform init -backend=false
         terraform validate
-    displayName: Terraform init & validate
+      displayName: Terraform init & validate
