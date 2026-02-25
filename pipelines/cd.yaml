@@ -91,7 +91,7 @@ stages:
         environmentServiceNameAzureRM: $(azureServiceConnection) 
         commandOptions: -auto-approve 
 
- - stage: BuildApi 
+- stage: BuildApi 
   displayName: API - Build & Deploy 
   dependsOn: TerraformApply 
   jobs: 
@@ -117,7 +117,7 @@ stages:
       
     - publish: $(Pipeline.Workspace)/api 
       artifact: artifact-api 
- - stage: DeployApi 
+- stage: DeployApi 
   displayName: Deploy API Function 
   dependsOn: BuildApi 
   jobs: 
@@ -164,7 +164,7 @@ stages:
       
     - publish: $(Pipeline.Workspace)/downloader 
       artifact: artifact-downloader 
- - stage: DeployDownloader 
+- stage: DeployDownloader 
   displayName: Deploy Downloader Function 
   dependsOn: BuildDownloader 
   jobs: 
