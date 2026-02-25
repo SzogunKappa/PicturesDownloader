@@ -1,9 +1,15 @@
 trigger:
 - master
-pool:
-  vmImage: windows-latest
-steps:
-- script: echo Hello, world!
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: BuildJob
+    displayName: Build job
+    pool:
+      vmImage: windows-latest
+  steps:
+  - script: echo Hello, world!
   displayName: 'Run a one-line script'
 - script: |
     echo Add other tasks to build, test, and deploy your project.
