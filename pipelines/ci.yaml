@@ -10,14 +10,14 @@ stages:
     pool:
       vmImage: windows-latest
     steps:
-  - checkout: self
+    - checkout: self
 
-  - task: UseDotNet@2
-    inputs:
-      version: '8.0.x'
+    - task: UseDotNet@2
+      inputs:
+        version: '8.0.x'
   
-  - script: dotnet build code/Api --configuration Release
-    displayName: Build Api function
+    - script: dotnet build code/Api --configuration Release
+      displayName: Build Api function
   
-  - script: dotnet build code/Downloader --configuration Release
-    displayName: Build Downloader function
+    - script: dotnet build code/Downloader --configuration Release
+      displayName: Build Downloader function
